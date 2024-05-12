@@ -155,6 +155,6 @@ class Environment:
         """
         self.apply_action(action)
         lidar_points = self.lidar.getPointCloud()
-        state = self.get_state_features(lidar_points)
+        state = self.get_state(lidar_points)
         return state
 
