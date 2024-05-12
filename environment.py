@@ -21,7 +21,7 @@ class Environment:
         self.max_steps_per_episode = 1000
         self.final_position = np.array([1.8, 1.8])  # Definir a posição final
         self.state_size = self.lidar.getHorizontalResolution() * self.lidar.getVerticalResolution() + 1
-        self.action_size = 4  # Definir o tamanho do espaço de ações
+        self.action_size = 3  # Definir o tamanho do espaço de ações
         self.max_speed = 1
 
     def reset(self):
