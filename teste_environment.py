@@ -51,14 +51,15 @@ class Environment:
 
         Parâmetros:
         - lidar_point_cloud (array): Array de pontos LIDAR.
+        - collision_threshold (float): Threshold para detectar colisão.
 
         Retorna:
         - bool: True se colisão detectada, False caso contrário.
         """
         for point in lidar_point_cloud:
-            print("point X", point.x, "Y", point.y)
-            if np.any(np.isinf([point.x, point.y])):
-                #print("Infelizmente")
+            distance_to_robot = np.sqrt(point.x ** 2 + point.y ** 2)
+            print("distance_to_robot = ", distance_to_robot)
+            if distance_to_robot == float('inf'):
                 return True  # Colisão detectada
         return False  # Nenhuma colisão detectada
 
