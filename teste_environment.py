@@ -1,11 +1,6 @@
 import numpy as np
 from controller import Lidar, GPS, LidarPoint, Robot, Supervisor
-from controllers.utils import cmd_vel
-import random
-
-import numpy as np
-from controller import Lidar, GPS, LidarPoint, Robot, Supervisor
-from controllers.utils import cmd_vel
+from controllers.utils import cmd_vel,warp_robot
 import random
 
 class Environment:
@@ -25,36 +20,17 @@ class Environment:
         self.gps.enable(self.timestep)
         self.max_episodes = 100
         self.max_steps_per_episode = 1000
+        self.init_pos=np.array([0.17, 0.12])
         self.final_position = np.array([2.45, 0])  # Definir a posição final
         self.action_size = 3  # Definir o tamanho do espaço de ações
         self.max_speed = 1.5
 
     def reset(self):
-        """
-        Reseta o ambiente para o estado inicial.
 
-        Retorna:
-        - None
-        """
+        print("initial position", self.init_pos)
+        warp_robot(self.robot, "EPUCK", self.init_pos)
 
-        def reset(self):
-            """
-            Reseta o ambiente para o estado inicial.
 
-            Retorna:
-            - None
-            """
-            # Reinicia o estado interno do ambiente
-            self.robot.simulationReset()
-            self.robot.simulationResetPhysics()
-
-            # Reposiciona o robô na posição inicial desejada
-            root = self.robot.getRoot()
-            translation_field = root.getField("translation")
-            translation_field.setSFVec3f([0, 0, 0])  # Substitua [0, 0, 0] pela posição inicial desejada
-
-            # Avança a simulação para garantir que a mudança de posição tenha efeito
-            self.robot.step(self.timestep)
 
 
     def calculate_distance_to_goal(self):
@@ -65,6 +41,7 @@ class Environment:
         - float: Distância até o objetivo.
         """
         current_position = np.array(self.gps.getValues()[:2])
+        #print("current position", current_position)
         distance_to_goal = np.linalg.norm(current_position - self.final_position)
         return distance_to_goal
 
@@ -81,7 +58,7 @@ class Environment:
         for point in lidar_point_cloud:
             print("point X", point.x, "Y", point.y)
             if np.any(np.isinf([point.x, point.y])):
-                print("Infelizmente")
+                #print("Infelizmente")
                 return True  # Colisão detectada
         return False  # Nenhuma colisão detectada
 
@@ -104,7 +81,7 @@ class Environment:
                 min_distance = distance_to_robot
 
         if min_distance < obstacle_proximity_threshold:
-            print("entrou")
+            #print("entrou")
             return -10  # Recompensa negativa se estiver próximo a um obstáculo
         else:
             return 0  # Nenhuma obstáculo próximo, então retornar 0
@@ -189,11 +166,14 @@ class Environment:
 
 def main():
     env = Environment()
+
     state = env.reset()
     total_reward = 0
     done = False
 
     while env.robot.step() != -1:
+
+
         print("---------------------------------------------")
         action = random.randint(0, 2)
         state = env.step(action)
