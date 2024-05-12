@@ -3,16 +3,18 @@ import numpy as np
 from controller import Lidar, GPS, LidarPoint, Robot, Supervisor
 from controllers.utils import cmd_vel
 
-robot = Robot()
+#supervisor: Supervisor = Supervisor()
+
 
 class Environment:
     def __init__(self):
-        self.robot = robot
-        self.timestep = int(robot.getBasicTimeStep())
-        self.lidar: Lidar = robot.getDevice('lidar')
+        self.robot : Supervisor = Supervisor()
+        #self.timestep = 100
+        self.timestep = int(self.robot.getBasicTimeStep())
+        self.lidar : Lidar = self.robot.getDevice('lidar')
         self.lidar.enable(self.timestep)
         self.lidar.enablePointCloud()
-        self.gps: GPS = self.robot.getDevice('gps')
+        self.gps = self.robot.getDevice('gps')
         self.gps.enable(self.timestep)
         self.max_episodes = 100
         self.max_steps_per_episode = 1000
@@ -20,13 +22,12 @@ class Environment:
         self.num_sectors = 8
         self.state_size = self.num_sectors * 2 + 2  # Definir o tamanho do espaço de estados
         self.action_size = 4  # Definir o tamanho do espaço de ações
-
-
+        self.max_speed=1
     def reset(self):
         # Resetar o ambiente para o estado inicial
         self.robot.simulationReset()
         self.robot.simulationResetPhysics()
-        super(Supervisor, self).step(int(self.getBasicTimeStep()))
+        self.robot.step(self.timestep)
 
     def calculate_distance_to_goal(self):
         # Calcular a distância atual até a posição final
@@ -121,7 +122,6 @@ class QLearningAgent:
 
 
 def main():
-    # Inicialização do ambiente e do agente
     env = Environment()
     agent = QLearningAgent(env.state_size, env.action_size)  # Usar o tamanho correto do espaço de estados e ações
 
