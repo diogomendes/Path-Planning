@@ -80,7 +80,7 @@ class Environment:
             distance_to_robot = np.sqrt(point.x ** 2 + point.y ** 2)
             if distance_to_robot < min_distance:
                 min_distance = distance_to_robot
-
+        #print("min_distance", min_distance)
         if min_distance < obstacle_proximity_threshold:
             #print("entrou")
             return -10  # Recompensa negativa se estiver próximo a um obstáculo
@@ -111,18 +111,21 @@ class Environment:
         #print("Collision detected: ", collision)
         obstacle_proximity_reward = self.detect_obstacle_proximity(self.lidar.getPointCloud())
         #print("Obstacle proximity", obstacle_proximity_reward)
-        if distance_to_goal < 0.06:
-            reward = 25
-        elif distance_to_goal < 42:
-            reward = 2.5 * (1 - np.exp(-1 / distance_to_goal))
-        elif collision:
-            reward = -100
-        elif obstacle_proximity_reward < 0:
-            reward = obstacle_proximity_reward
-        else:
-            reward = -distance_to_goal / 100
 
-        return reward
+        if collision:
+            return -500
+
+        if obstacle_proximity_reward < 0:
+            return obstacle_proximity_reward
+
+        if distance_to_goal < 0.06:
+            return 150
+        elif distance_to_goal < 5:
+            return 1.5 * (1 - np.exp(-1 / distance_to_goal))
+        elif distance_to_goal <15:
+            return 0.5 * (1 - np.exp(-1 / distance_to_goal))
+        else:
+            return -1
 
     def apply_action(self, action):
         """
@@ -235,7 +238,7 @@ for episode in range(env.max_episodes):
         if env.calculate_distance_to_goal() < 0.06:  # Se o robô alcançar o objetivo, interrompe o episódio
             break
         print("total reward", total_reward)
-        if total_reward < -100:  # Se a recompensa for muito negativa, interrompe o episódio
+        if total_reward < -300:  # Se a recompensa for muito negativa, interrompe o episódio
             break
     print("episode", episode)
 
