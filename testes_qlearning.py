@@ -248,7 +248,9 @@ done = False
 while not done:
     action = agent.choose_action(state)
     state = env.step(action)
-    # Implementar condição de parada (e.g., quando o objetivo é alcançado)
+    distance_to_goal = env.calculate_distance_to_goal()
+    if distance_to_goal < 0.06:  # Condição para parar quando o objetivo é alcançado
+        done=True
 
 
 
