@@ -108,21 +108,24 @@ class Environment:
         """
         distance_to_goal = self.calculate_distance_to_goal()
         collision = self.detect_collision(self.lidar.getPointCloud())
-        print("Collision detected: ", collision)
+        #print("Collision detected: ", collision)
         obstacle_proximity_reward = self.detect_obstacle_proximity(self.lidar.getPointCloud())
-        print("Obstacle proximity", obstacle_proximity_reward)
-        if distance_to_goal < 0.06:
-            reward = 25
-        elif distance_to_goal < 42:
-            reward = 2.5 * (1 - np.exp(-1 / distance_to_goal))
-        elif collision:
-            reward = -100
-        elif obstacle_proximity_reward < 0:
-            reward = obstacle_proximity_reward
-        else:
-            reward = -distance_to_goal / 100
+        #print("Obstacle proximity", obstacle_proximity_reward)
 
-        return reward
+        if collision:
+            return -500
+
+        if obstacle_proximity_reward < 0:
+            return obstacle_proximity_reward
+
+        if distance_to_goal < 0.06:
+            return 150
+        elif distance_to_goal < 5:
+            return 1.5 * (1 - np.exp(-1 / distance_to_goal))
+        elif distance_to_goal <15:
+            return 0.5 * (1 - np.exp(-1 / distance_to_goal))
+        else:
+            return -1
 
     def apply_action(self, action):
         """
