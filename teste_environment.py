@@ -108,9 +108,9 @@ class Environment:
         """
         distance_to_goal = self.calculate_distance_to_goal()
         collision = self.detect_collision(self.lidar.getPointCloud())
-        print("Collision detected: ", collision)
+        #print("Collision detected: ", collision)
         obstacle_proximity_reward = self.detect_obstacle_proximity(self.lidar.getPointCloud())
-        print("Obstacle proximity", obstacle_proximity_reward)
+        #print("Obstacle proximity", obstacle_proximity_reward)
         if distance_to_goal < 0.06:
             reward = 25
         elif distance_to_goal < 42:
