@@ -1,9 +1,10 @@
 import gymnasium as gym
-from gym import spaces
+from gymnasium import spaces
 import numpy as np
 import numpy as np
 from controller import Lidar, GPS, LidarPoint, Robot, Supervisor
 from controllers.utils import cmd_vel, warp_robot
+import math
 
 
 class Environment(gym.Env):
@@ -40,7 +41,7 @@ class Environment(gym.Env):
                                             dtype=np.float32)
         #self.observation_space = lidar_points_count
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
         """
         Reinicia o ambiente para o estado inicial.
 
@@ -48,7 +49,9 @@ class Environment(gym.Env):
         - numpy.ndarray: Estado inicial do ambiente.
         """
         warp_robot(self.robot, "EPUCK", self.init_pos)
-        return self.get_state()
+        info = self.calculate_distance_to_goal()
+        n = {"distance": info}
+        return self.get_state(),n
 
     def calculate_distance_to_goal(self):
         """
@@ -57,8 +60,11 @@ class Environment(gym.Env):
         Retorna:
         - float: Distância até o objetivo.
         """
+
         current_position = np.array(self.gps.getValues()[:2])
         distance_to_goal = np.linalg.norm(current_position - self.final_position)
+        if np.isnan(distance_to_goal):
+            distance_to_goal = np.linalg.norm(self.init_pos-self.final_position)
         return distance_to_goal
 
     def detect_collision(self, lidar_point_cloud):
@@ -110,6 +116,15 @@ class Environment(gym.Env):
         lidar_point_cloud = self.lidar.getPointCloud()
         distance_to_goal = self.calculate_distance_to_goal()
         state = [point.x for point in lidar_point_cloud] + [point.y for point in lidar_point_cloud] + [distance_to_goal]
+        #print(distance_to_goal)
+        #print(state)
+        j=0
+        for i in state:
+            if math.isinf(i):
+                state[j] = 100
+            j += 1
+        #print(state)
+
         return np.array(state, dtype=np.float32)
 
     def get_reward(self):
@@ -178,9 +193,9 @@ class Environment(gym.Env):
         state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
         reward = self.get_reward()  # Calcula a recompensa com base no novo estado
         done = reward == -500 or self.calculate_distance_to_goal() < 0.06
-        info = {}  # Pode ser usado para informações adicionais
-
-        return state, reward, done, info
+        n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
+        info = {"distance": n}
+        return state, reward, done, False, info
 
     def render(self, mode='human'):
         """
