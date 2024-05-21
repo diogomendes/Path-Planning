@@ -5,6 +5,7 @@ import numpy as np
 from controller import Lidar, GPS, LidarPoint, Robot, Supervisor
 from controllers.utils import cmd_vel, warp_robot
 import math
+import time
 
 
 class Environment(gym.Env):
@@ -24,6 +25,8 @@ class Environment(gym.Env):
         self.lidar.enablePointCloud()
         self.gps = self.robot.getDevice('gps')
         self.gps.enable(self.timestep)
+        self.touch = self.robot.getDevice('touch sensor')
+        self.touch.enable(self.timestep)
         self.max_episodes = 100
         self.max_steps_per_episode = 1000
         self.init_pos = np.array([0.17, 0.12])
@@ -48,6 +51,7 @@ class Environment(gym.Env):
         Retorna:
         - numpy.ndarray: Estado inicial do ambiente.
         """
+        print("INICIO")
         warp_robot(self.robot, "EPUCK", self.init_pos)
         info = self.calculate_distance_to_goal()
         n = {"distance": info}
@@ -67,7 +71,7 @@ class Environment(gym.Env):
             distance_to_goal = np.linalg.norm(self.init_pos-self.final_position)
         return distance_to_goal
 
-    def detect_collision(self, lidar_point_cloud):
+    def detect_collision(self):
         """
         Detecta colisão usando dados do sensor LIDAR.
 
@@ -77,11 +81,10 @@ class Environment(gym.Env):
         Retorna:
         - bool: True se colisão detectada, False caso contrário.
         """
-        for point in lidar_point_cloud:
-            distance_to_robot = np.sqrt(point.x ** 2 + point.y ** 2)
-            if distance_to_robot == float('inf'):
-                return True  # Colisão detectada
-        return False  # Nenhuma colisão detectada
+        if self.touch.getValue() == 1.0:
+            return True
+        return False
+
 
     def detect_obstacle_proximity(self, lidar_point_cloud):
         """
@@ -93,7 +96,7 @@ class Environment(gym.Env):
         Retorna:
         - float: Recompensa negativa se estiver próximo a um obstáculo, 0 caso contrário.
         """
-        obstacle_proximity_threshold = 0.03  # Definir um limite para considerar a proximidade de um obstáculo
+        obstacle_proximity_threshold = 0.05  # Definir um limite para considerar a proximidade de um obstáculo
         min_distance = float('inf')
 
         for point in lidar_point_cloud:
@@ -116,6 +119,9 @@ class Environment(gym.Env):
         lidar_point_cloud = self.lidar.getPointCloud()
         distance_to_goal = self.calculate_distance_to_goal()
         state = [point.x for point in lidar_point_cloud] + [point.y for point in lidar_point_cloud] + [distance_to_goal]
+        #time = [t.time for t in lidar_point_cloud]
+        #print(time)
+        #print()
         #print(distance_to_goal)
         #print(state)
         j=0
@@ -135,7 +141,7 @@ class Environment(gym.Env):
         - float: Recompensa atual.
         """
         distance_to_goal = self.calculate_distance_to_goal()
-        collision = self.detect_collision(self.lidar.getPointCloud())
+        collision = self.detect_collision()
         obstacle_proximity_reward = self.detect_obstacle_proximity(self.lidar.getPointCloud())
 
         if collision:
@@ -173,10 +179,12 @@ class Environment(gym.Env):
         elif action == 2:
             angular_vel = -self.max_speed
 
-        self.robot.step(200)
+        #
 
         # Aplicar velocidades ao robô
+
         cmd_vel(self.robot, linear_vel, angular_vel)
+        self.robot.step(200)
 
     def step(self, action):
         """
@@ -189,12 +197,16 @@ class Environment(gym.Env):
         - tuple: Novo estado após a aplicação da ação, recompensa, se está finalizado e informações adicionais.
         """
         self.apply_action(action)  # Aplica a ação ao ambiente
-        self.robot.step(self.timestep)  # Avança a simulação para atualizar o estado do LiDAR
+        #self.robot.step(self.timestep)  # Avança a simulação para atualizar o estado do LiDAR
+        #time.sleep(2)
         state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
         reward = self.get_reward()  # Calcula a recompensa com base no novo estado
         done = reward == -500 or self.calculate_distance_to_goal() < 0.06
         n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
         info = {"distance": n}
+        #print(reward)
+        #print(state)
+        #time.sleep(2)
         return state, reward, done, False, info
 
     def render(self, mode='human'):
@@ -219,3 +231,4 @@ class Environment(gym.Env):
         self.lidar.disable()
         self.gps.disable()
         pass  # Aqui você pode adicionar qualquer outra limpeza necessária.
+
