@@ -5,7 +5,7 @@ import numpy as np
 from controller import Lidar, GPS, LidarPoint, Robot, Supervisor
 from controllers.utils import cmd_vel, warp_robot
 import math
-import time
+import random
 
 
 class Environment(gym.Env):
@@ -28,11 +28,28 @@ class Environment(gym.Env):
         self.touch = self.robot.getDevice('touch sensor')
         self.touch.enable(self.timestep)
         self.max_episodes = 100
-        self.max_steps_per_episode = 1000
+        self.max_steps_per_episode = 400
         self.init_pos = np.array([0.17, 0.12])
-        self.final_position = np.array([2.45, 0])  # Definir a posição final
+        #self.final_position = np.array([2.45, 0])  # Definir a posição final
+        self.flag = self.robot.getFromDef('Flag')  # Flag visual do destino
+        # Escolha random de flag
+        self.posicoes = [
+            [1.75, 1.38],
+            [1.75, 0.37],
+            [0.25, 0.75],
+            [0.3, 1.50],
+        ]
+        #self.maps = ['worlds/Project_1.wbt','worlds/Project_2.wbt','worlds/Project_3.wbt',]
+        #self.map_choice = random.choice(self.maps)
+        #self.robot.loadWorld(self.map_choice)
+
+        self.final_position = np.array(random.choice(self.posicoes)) #Posiçao final
+        self.flag.getField('translation').setSFVec3f(list(self.final_position)+[0]) #Colocar flag na posiçao final
+        #print(len(list(self.final_position)+[0]))
         self.action_size = 3  # Definir o tamanho do espaço de ações
-        self.max_speed = 1.5
+        self.max_speed = 1
+        self.steps_done = 0
+        self.distance_before = np.linalg.norm(self.init_pos - self.final_position)
 
         # Definindo o espaço de ação
         self.action_space = spaces.Discrete(self.action_size)
@@ -51,8 +68,15 @@ class Environment(gym.Env):
         Retorna:
         - numpy.ndarray: Estado inicial do ambiente.
         """
-        print("INICIO")
+        #definir posicao final
+        #self.map_choice = random.choice(self.maps)
+        #self.robot.loadWorld(self.map_choice)
+
+        self.final_position = np.array(random.choice(self.posicoes))  # Posiçao final
+        self.flag.getField('translation').setSFVec3f(list(self.final_position)+[0])  # Colocar flag na posiçao final
+        #print(self.flag.getField('translation'))
         warp_robot(self.robot, "EPUCK", self.init_pos)
+        self.steps_done = 0
         info = self.calculate_distance_to_goal()
         n = {"distance": info}
         return self.get_state(),n
@@ -68,7 +92,7 @@ class Environment(gym.Env):
         current_position = np.array(self.gps.getValues()[:2])
         distance_to_goal = np.linalg.norm(current_position - self.final_position)
         if np.isnan(distance_to_goal):
-            distance_to_goal = np.linalg.norm(self.init_pos-self.final_position)
+            distance_to_goal = np.linalg.norm(self.init_pos - self.final_position)
         return distance_to_goal
 
     def detect_collision(self):
@@ -119,17 +143,11 @@ class Environment(gym.Env):
         lidar_point_cloud = self.lidar.getPointCloud()
         distance_to_goal = self.calculate_distance_to_goal()
         state = [point.x for point in lidar_point_cloud] + [point.y for point in lidar_point_cloud] + [distance_to_goal]
-        #time = [t.time for t in lidar_point_cloud]
-        #print(time)
-        #print()
-        #print(distance_to_goal)
-        #print(state)
         j=0
         for i in state:
             if math.isinf(i):
                 state[j] = 100
             j += 1
-        #print(state)
 
         return np.array(state, dtype=np.float32)
 
@@ -141,23 +159,31 @@ class Environment(gym.Env):
         - float: Recompensa atual.
         """
         distance_to_goal = self.calculate_distance_to_goal()
+        progress = self.distance_before - distance_to_goal #Recompensa ou penalidade se tiver mais longe ou mais proximoa do objetivo
         collision = self.detect_collision()
-        obstacle_proximity_reward = self.detect_obstacle_proximity(self.lidar.getPointCloud())
+        rew = self.detect_obstacle_proximity(self.lidar.getPointCloud()) #Penalidade se estiver proximo de um objeto
 
         if collision:
             return -500
 
-        if obstacle_proximity_reward < 0:
-            return obstacle_proximity_reward
+        if progress >= 0:
+            rew += 2
+        else:
+            rew += -2
 
         if distance_to_goal < 0.06:
-            return 300
+            rew += 300
+
         elif distance_to_goal < 0.8:
-            return 20
-        elif distance_to_goal < 1.8:
-            return 10
+            rew += 5
+
+        elif distance_to_goal < 1.5:
+            rew += 2
+
         else:
-            return 1
+            rew += -2
+
+        return rew
 
     def apply_action(self, action):
         """
@@ -197,16 +223,14 @@ class Environment(gym.Env):
         - tuple: Novo estado após a aplicação da ação, recompensa, se está finalizado e informações adicionais.
         """
         self.apply_action(action)  # Aplica a ação ao ambiente
-        #self.robot.step(self.timestep)  # Avança a simulação para atualizar o estado do LiDAR
-        #time.sleep(2)
+        self.steps_done += 1
         state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
         reward = self.get_reward()  # Calcula a recompensa com base no novo estado
-        done = reward == -500 or self.calculate_distance_to_goal() < 0.06
+        done = reward == -500 or self.calculate_distance_to_goal() < 0.06 or self.steps_done == self.max_steps_per_episode
         n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
         info = {"distance": n}
-        #print(reward)
-        #print(state)
-        #time.sleep(2)
+        if done:
+            print('Reward_Final = ',reward)
         return state, reward, done, False, info
 
     def render(self, mode='human'):
