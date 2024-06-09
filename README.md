@@ -27,3 +27,21 @@ Generalização:
 
 A discretização também pode ser combinada com técnicas de generalização, onde estados similares são tratados de maneira semelhante, o que pode ajudar na convergência do aprendizado.
 Utilizar a discretização para transformar espaços de estado contínuos em discretos é uma maneira eficaz de aplicar algoritmos de aprendizado por reforço a problemas que, de outra forma, seriam inabordáveis devido à complexidade ou ao tamanho do espaço de estado.
+
+
+
+
+
+2. Definir state_limits
+state_limits define os limites mínimos e máximos para cada dimensão do seu espaço de estado. Por exemplo, se você está trabalhando com um robô que tem posições que variam de 0 a 5 metros em uma dimensão, você definiria os limites dessa dimensão como (0, 5).
+
+Coleta de Dados: Uma maneira de determinar esses limites é observar o comportamento do ambiente (ou simulador) em várias situações ou consultar a documentação técnica para encontrar esses limites.
+Exemplo Prático: Se você está medindo a distância até um objetivo e sabe que a distância máxima possível é 5 metros, seus limites podem ser de (0, 5) para essa dimensão.
+3. Definir num_bins
+num_bins determina quantos intervalos discretos (bins) você deseja para cada dimensão do estado. Isso influencia a granularidade com que você modela o espaço de estado:
+
+Maior Granularidade: Mais bins permitem uma modelagem mais detalhada do ambiente, mas aumentam o tamanho da tabela Q e podem requerer mais tempo e dados para aprender eficazmente.
+
+Menor Granularidade: Menos bins simplificam o modelo e podem acelerar a aprendizagem, mas com o custo de possivelmente perder detalhes importantes sobre o estado.
+
+Escolha Prática: Uma regra geral é começar com um número menor de bins (por exemplo, 10 bins por dimensão) e ajustar com base no desempenho do agente. Se o agente parece não aprender políticas eficazes, pode ser necessário ajustar o número de bins ou os próprios limites.
