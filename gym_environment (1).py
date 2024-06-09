@@ -167,7 +167,7 @@ class Environment(gym.Env):
         rew = self.detect_obstacle_proximity(self.lidar.getPointCloud()) #Penalidade se estiver proximo de um objeto
 
         if self.last_move == 1 or self.last_move == 2:
-            rew = -2
+            rew -= 3
 
         if collision:
             rew-=500
@@ -231,7 +231,7 @@ class Environment(gym.Env):
         self.steps_done += 1
         state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
         self.reward += self.get_reward()  # Calcula a recompensa com base no novo estado
-        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.03 or self.steps_done == self.max_steps_per_episode or self.bate
+        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.05 or self.steps_done == self.max_steps_per_episode or self.bate
         n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
         info = {"distance": n}
         if done:
@@ -259,5 +259,7 @@ class Environment(gym.Env):
         """
         self.lidar.disable()
         self.gps.disable()
-        pass  # Aqui você pode adicionar qualquer outra limpeza necessária.
+        pass
+
+
 
