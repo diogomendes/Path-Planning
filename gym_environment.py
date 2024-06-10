@@ -32,7 +32,7 @@ class Environment(gym.Env):
         #self.final_position = np.array([2.45, 0])  # Definir a posição final
         self.flag = self.robot.getFromDef('Flag')  # Flag visual do destino
         # Escolha random de flag
-        self.posicoes = [
+        self.posicoes = [ #[0.05,0.05]
             [1.75, 1.38],
             [1.75, 0.37],
             [0.25, 0.75],
@@ -41,6 +41,7 @@ class Environment(gym.Env):
         #self.maps = ['worlds/Project_1.wbt','worlds/Project_2.wbt','worlds/Project_3.wbt',]
         #self.map_choice = random.choice(self.maps)
         #self.robot.loadWorld(self.map_choice)
+        self.last_move = None
         self.reward = 0
         self.final_position = np.array(random.choice(self.posicoes)) #Posiçao final
         self.flag.getField('translation').setSFVec3f(list(self.final_position)+[0]) #Colocar flag na posiçao final
@@ -72,6 +73,7 @@ class Environment(gym.Env):
         #self.map_choice = random.choice(self.maps)
         #self.robot.loadWorld(self.map_choice)
         self.reward = 0
+        self.last_move = None
         self.bate = False
         self.final_position = np.array(random.choice(self.posicoes))  # Posiçao final
         self.flag.getField('translation').setSFVec3f(list(self.final_position)+[0])  # Colocar flag na posiçao final
@@ -161,8 +163,13 @@ class Environment(gym.Env):
         """
         distance_to_goal = self.calculate_distance_to_goal()
         progress = self.distance_before - distance_to_goal #Recompensa ou penalidade se tiver mais longe ou mais proximoa do objetivo
+        self.distance_before = distance_to_goal #Atualiza a distancia
         collision = self.detect_collision()
         rew = self.detect_obstacle_proximity(self.lidar.getPointCloud()) #Penalidade se estiver proximo de um objeto
+
+
+        if self.last_move == 1 or self.last_move == 2:
+            rew -= 2
 
         if collision:
             rew-=500
@@ -220,11 +227,13 @@ class Environment(gym.Env):
         Retorna:
         - tuple: Novo estado após a aplicação da ação, recompensa, se está finalizado e informações adicionais.
         """
+
+        self.last_move = action
         self.apply_action(action)  # Aplica a ação ao ambiente
         self.steps_done += 1
         state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
         self.reward += self.get_reward()  # Calcula a recompensa com base no novo estado
-        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.03 or self.steps_done == self.max_steps_per_episode or self.bate
+        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.05 or self.steps_done == self.max_steps_per_episode or self.bate
         n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
         info = {"distance": n}
         if done:
