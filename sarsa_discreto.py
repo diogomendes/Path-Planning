@@ -55,8 +55,8 @@ def process_lidar_points(lidar_data):
     return reduced_lidar_points
 
 def save_model(agent, episodes, reward, loss):
-    name_model = 'QLearning' + str(episodes) + '.pkl'
-    name_lr = os.path.join('QLearning_lr.csv')
+    name_model = 'Sarsa' + str(episodes) + '.pkl'
+    name_lr = os.path.join('Sarsa_lr.csv')
     if not os.path.isfile(name_lr):
         df = pd.DataFrame(columns=['Episodes', 'Loss', 'Reward'])
         df.to_csv(name_lr, index=False)
@@ -96,6 +96,7 @@ if __name__ == "__main__":
         if e % 10 == 0:
             print(f"Episode {e}: Total reward = {total_reward}")
             save_model(agent, e, total_reward, error)
+
 
 
 
