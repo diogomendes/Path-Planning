@@ -75,6 +75,7 @@ class Environment(gym.Env):
         self.reward = 0
         self.last_move = None
         self.bate = False
+        self.distance_before = np.linalg.norm(self.init_pos - self.final_position)
         self.final_position = np.array(random.choice(self.posicoes))  # Posiçao final
         self.flag.getField('translation').setSFVec3f(list(self.final_position)+[0])  # Colocar flag na posiçao final
         #print(self.flag.getField('translation'))
@@ -179,10 +180,11 @@ class Environment(gym.Env):
 
         if distance_to_goal < 0.125:
             return 1000
-        if progress > 0.01:
-            rew += 4
+        if progress > 0:
+            rew += +3
+
         else:
-            rew += -2
+            rew -= 5
 
 
         """
@@ -241,7 +243,7 @@ class Environment(gym.Env):
         self.steps_done += 1
         state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
         self.reward += self.get_reward()  # Calcula a recompensa com base no novo estado
-        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.125 or self.steps_done == self.max_steps_per_episode or self.bate
+        done = self.reward <= -1000 or self.calculate_distance_to_goal() < 0.125 or self.steps_done == self.max_steps_per_episode or self.bate
 
         n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
         info = {"distance": n}
@@ -271,3 +273,5 @@ class Environment(gym.Env):
         self.lidar.disable()
         self.gps.disable()
         pass  # Aqui você pode adicionar qualquer outra limpeza necessária.
+
+
