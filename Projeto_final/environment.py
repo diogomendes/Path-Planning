@@ -33,12 +33,12 @@ class Environment(gym.Env):
         self.flag = self.robot.getFromDef('Flag')  # Flag visual do destino
         # Escolha random de flag
         self.posicoes = [ #[0.05,0.05]
-            [1.75, 1.38]
+            [1.75, 1.38],
+            [1.75, 0.37],
+            [0.25, 0.75],
+            [0.3, 1.50],
         ]
-        #,
-        #[1.75, 0.37],
-        #[0.25, 0.75],
-        #[0.3, 1.50],
+        
         #self.maps = ['worlds/Project_1.wbt','worlds/Project_2.wbt','worlds/Project_3.wbt',]
         #self.map_choice = random.choice(self.maps)
         #self.robot.loadWorld(self.map_choice)
