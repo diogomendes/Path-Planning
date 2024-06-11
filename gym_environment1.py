@@ -160,7 +160,7 @@ class Environment(gym.Env):
 
         return np.array(state, dtype=np.float32)
 
-    def get_reward(self):
+        def get_reward(self):
         """
         Calcula a recompensa com base na distância até o objetivo e detecção de colisão.
 
@@ -178,13 +178,13 @@ class Environment(gym.Env):
             rew -= 2
 
         if collision:
-            rew-=500
+            rew-=200
             self.bate=True
 
         if progress > 0:
             rew += 2
         else:
-            rew += -2
+            rew -= 2
 
         if distance_to_goal < 0.05:
             rew += 300
@@ -195,7 +195,7 @@ class Environment(gym.Env):
         #    rew += -2
         #rew-=1
         return rew
-
+        
     def apply_action(self, action):
         """
         Aplica a ação ao robô.
