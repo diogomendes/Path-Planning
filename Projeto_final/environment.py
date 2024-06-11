@@ -36,7 +36,7 @@ class Environment(gym.Env):
             [1.75, 1.38],
             [1.75, 0.37],
             [0.25, 0.75],
-            [0.3, 1.50],
+            [0.3, 1.50]
         ]
         
         #self.maps = ['worlds/Project_1.wbt','worlds/Project_2.wbt','worlds/Project_3.wbt',]
