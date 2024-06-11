@@ -148,13 +148,13 @@ class Environment(gym.Env):
         distance_to_goal = self.calculate_distance_to_goal()
         state = [(abs(point.x), abs(point.y)) for point in lidar_point_cloud]
         state = [math.sqrt(point[0]**2 + point[1]**2) for point in state]
-        print(state)
-        print(self.last_state)
+        #print(state)
+        #print(self.last_state)
         for i in range(len(state)):
             if math.isinf(state[i]):
                 state[i] = self.last_state[i]
         #state = [point.x for point in lidar_point_cloud] + [point.y for point in lidar_point_cloud] + [distance_to_goal]
-        print(state)
+        #print(state)
         state.append(distance_to_goal)
         self.last_state = state
 
@@ -186,7 +186,7 @@ class Environment(gym.Env):
         else:
             rew += -2
 
-        if distance_to_goal < 0.03:
+        if distance_to_goal < 0.05:
             rew += 300
 
         #elif distance_to_goal < 0.8:
@@ -268,4 +268,5 @@ class Environment(gym.Env):
         self.lidar.disable()
         self.gps.disable()
         pass  # Aqui você pode adicionar qualquer outra limpeza necessária.
+
 
