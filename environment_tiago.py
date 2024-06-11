@@ -180,7 +180,7 @@ class Environment(gym.Env):
         else:
             rew += -2
 
-        if distance_to_goal < 0.03:
+        if distance_to_goal < 0.125:
             rew += 300
 
         #elif distance_to_goal < 0.8:
@@ -233,7 +233,7 @@ class Environment(gym.Env):
         self.steps_done += 1
         state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
         self.reward += self.get_reward()  # Calcula a recompensa com base no novo estado
-        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.05 or self.steps_done == self.max_steps_per_episode or self.bate
+        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.125 or self.steps_done == self.max_steps_per_episode or self.bate
         n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
         info = {"distance": n}
         if done:
