@@ -181,7 +181,7 @@ class Environment(gym.Env):
             rew += -2
 
         if distance_to_goal < 0.125:
-            rew += 300
+            rew += 500
 
         #elif distance_to_goal < 0.8:
         #    rew += 5
