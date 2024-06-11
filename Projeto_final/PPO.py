@@ -4,7 +4,7 @@ from environment import Environment
 
 env = Environment()
 
-model = PPO("MultiInputPolicy", env, verbose=1,tensorboard_log='logdir')
+model = PPO("MlpPolicy", env, verbose=1,tensorboard_log='logdir')
 
 #model = PPO.load('Training\\PPO11\\150000', env) #load model ja treinado
 
