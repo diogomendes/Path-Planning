@@ -132,4 +132,133 @@ class Environment(gym.Env):
                 min_distance = distance_to_robot
 
         if min_distance < obstacle_proximity_threshold:
-         
+            return -10  # Recompensa negativa se estiver próximo a um obstáculo
+        else:
+            return 0  # Nenhuma obstáculo próximo, então retornar 0
+
+    def get_state(self):
+        """
+        Obtém o estado atual do ambiente.
+
+        Retorna:
+        - numpy.ndarray: Estado atual do ambiente.
+        """
+        lidar_point_cloud = self.lidar.getPointCloud()
+        distance_to_goal = self.calculate_distance_to_goal()
+        state = [point.x for point in lidar_point_cloud] + [point.y for point in lidar_point_cloud] + [distance_to_goal]
+        j=0
+        for i in state:
+            if math.isinf(i):
+                state[j] = 100
+            j += 1
+
+        return np.array(state, dtype=np.float32)
+
+    def get_reward(self):
+        """
+        Calcula a recompensa com base na distância até o objetivo e detecção de colisão.
+
+        Retorna:
+        - float: Recompensa atual.
+        """
+        distance_to_goal = self.calculate_distance_to_goal()
+        progress = self.distance_before - distance_to_goal #Recompensa ou penalidade se tiver mais longe ou mais proximoa do objetivo
+        self.distance_before = distance_to_goal #Atualiza a distancia
+        collision = self.detect_collision()
+        rew = self.detect_obstacle_proximity(self.lidar.getPointCloud()) #Penalidade se estiver proximo de um objeto
+
+
+        if self.last_move == 1 or self.last_move == 2:
+            rew -= 2
+
+        if collision:
+            rew-=500
+            self.bate=True
+
+        if progress > 0:
+            rew += 2
+        else:
+            rew += -2
+
+        if distance_to_goal < 0.03:
+            rew += 300
+
+        #elif distance_to_goal < 0.8:
+        #    rew += 5
+        #else:
+        #    rew += -2
+        #rew-=1
+        return rew
+
+    def apply_action(self, action):
+        """
+        Aplica a ação ao robô.
+
+        Parâmetros:
+        - action (int): Ação a ser aplicada.
+
+        Retorna:
+        - None
+        """
+        linear_vel = 0
+        angular_vel = 0
+
+        if action == 0:
+            linear_vel = self.max_speed
+        elif action == 1:
+            angular_vel = self.max_speed
+        elif action == 2:
+            angular_vel = -self.max_speed
+
+        #
+
+        # Aplicar velocidades ao robô
+
+        cmd_vel(self.robot, linear_vel, angular_vel)
+        self.robot.step(200)
+
+    def step(self, action):
+        """
+        Aplica a ação ao ambiente e retorna o novo estado.
+
+        Parâmetros:
+        - action (int): Ação a ser aplicada.
+
+        Retorna:
+        - tuple: Novo estado após a aplicação da ação, recompensa, se está finalizado e informações adicionais.
+        """
+
+        self.last_move = action
+        self.apply_action(action)  # Aplica a ação ao ambiente
+        self.steps_done += 1
+        state = self.get_state()  # Obtém o novo estado com base nos dados atualizados do LiDAR
+        self.reward += self.get_reward()  # Calcula a recompensa com base no novo estado
+        done = self.reward <= -500 or self.calculate_distance_to_goal() < 0.05 or self.steps_done == self.max_steps_per_episode or self.bate
+        n = self.calculate_distance_to_goal()  # Pode ser usado para informações adicionais
+        info = {"distance": n}
+        if done:
+            print('Reward_Final = ',self.reward)
+        return state, self.reward, done, False, info
+
+    def render(self, mode='human'):
+        """
+        Renderiza o ambiente (opcional).
+
+        Parâmetros:
+        - mode (str): Modo de renderização (não usado).
+
+        Retorna:
+        - None
+        """
+        pass  # Por enquanto, não fazemos nada aqui. No futuro, poderíamos adicionar código para visualizar o ambiente.
+
+    def close(self):
+        """
+        Fecha o ambiente e libera recursos (opcional).
+
+        Retorna:
+        - None
+        """
+        self.lidar.disable()
+        self.gps.disable()
+        pass  # Aqui você pode adicionar qualquer outra limpeza necessária.
