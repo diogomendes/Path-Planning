@@ -3,7 +3,7 @@ import random
 import pickle
 import os
 import pandas as pd
-from environment import Environment
+from env_final import Environment
 
 class QLearningAgent:
     def __init__(self, num_actions, alpha=0.1, gamma=0.99, epsilon=0.1):
@@ -16,7 +16,7 @@ class QLearningAgent:
 
     def discretize(self, state):
         if len(state) != 7:
-            raise ValueError("State should have exactly 7 dimensions based on the lidar input specified.")
+            raise ValueError("State should have exactly 7 dimensions.")
         state_idx = [np.digitize(state[i], self.bins) - 1 for i in range(len(state))]
         state_idx = tuple(max(0, min(x, len(self.bins) - 2)) for x in state_idx)
         return state_idx
@@ -32,21 +32,43 @@ class QLearningAgent:
         current_state_idx = self.discretize(state)
         next_state_idx = self.discretize(next_state)
         best_next_action = np.argmax(self.q_table[next_state_idx])
-        td_target = reward + self.gamma * self.q_table[next_state_idx][best_next_action]
-        td_error = td_target - self.q_table[current_state_idx][action]
-        self.q_table[current_state_idx][action] += self.alpha * td_error
+        td_target = reward + self.gamma * self.q_table[next_state_idx + (best_next_action,)]
+        td_error = td_target - self.q_table[current_state_idx + (action,)]
+        self.q_table[current_state_idx + (action,)] += self.alpha * td_error
         return td_error
 
 def process_lidar_points(lidar_data):
-    lidar_points = lidar_data[:-1]
-    num_groups = 7
-    points_per_group = len(lidar_points) // num_groups
-    reduced_lidar_points = [np.mean(lidar_points[i:i + points_per_group]) for i in range(0, len(lidar_points), points_per_group)]
+    # Verifica se lidar_data tem 43 elementos (21 pontos com x e y mais a distância ao obstáculo)
+    if len(lidar_data) != 43:
+        raise ValueError(
+            "Expected 43 elements in lidar_data: 42 for points (x and y for each) plus one for the distance to the obstacle.")
+
+    num_groups = 3  # Quer reduzir para 3 pontos
+    points_per_group = 14  # 7 pontos por grupo, cada ponto com x e y (7 * 2 = 14 elementos)
+    reduced_lidar_points = []
+
+    # Processa cada grupo para calcular a média dos componentes x e y
+    for i in range(0, 42, points_per_group):  # Usa 42 para evitar incluir a distância no processamento de pontos
+        group_x = lidar_data[i:i + points_per_group:2]  # Pega os elementos x do grupo
+        group_y = lidar_data[i + 1:i + points_per_group:2]  # Pega os elementos y do grupo
+
+        # Calcula a média de x e de y
+        avg_x = np.mean(group_x)
+        avg_y = np.mean(group_y)
+
+        # Adiciona as médias à lista reduzida
+        reduced_lidar_points.extend([avg_x, avg_y])
+
+    # Adiciona a distância ao obstáculo ao final da lista reduzida
+    distance_to_obstacle = lidar_data[-1]
+    reduced_lidar_points.append(distance_to_obstacle)
+
     return reduced_lidar_points
 
+
 def save_model(agent, episodes, reward, loss):
-    name_model = 'QLearning' + str(episodes) + '.pkl'
-    name_lr = os.path.join('QLearning_lr.csv')
+    name_model = 'Sarsa' + str(episodes) + '.pkl'
+    name_lr = os.path.join('Sarsa_lr.csv')
     if not os.path.isfile(name_lr):
         df = pd.DataFrame(columns=['Episodes', 'Loss', 'Reward'])
         df.to_csv(name_lr, index=False)
@@ -57,21 +79,19 @@ def save_model(agent, episodes, reward, loss):
     with open(name_model, 'wb') as f:
         pickle.dump(agent.q_table, f)
 
+
 if __name__ == "__main__":
     env = Environment()
     num_actions = 3
     agent = QLearningAgent(num_actions)
-    re = 0  # total reward so para graficos/analise
-    i = 0  # iteraçoes para calculo de media
-    loss = 0  # total loss para graficos/analise
+    re = 0  # total reward para gráficos/análise
+    loss = 0  # total loss para gráficos/análise
 
     num_episodes = 10000
     for e in range(num_episodes):
         raw_state, info = env.reset()
         state = process_lidar_points(raw_state)
         state = agent.discretize(state)
-        error_t = 0
-        t=0
 
         done = False
         total_reward = 0
@@ -82,13 +102,12 @@ if __name__ == "__main__":
             next_state = agent.discretize(next_state)
 
             error = agent.update_q_table(state, action, reward, next_state)
-            error_t += error
-            t += 1
-
             state = next_state
             total_reward += reward
+
         re += total_reward
-        loss += (error_t / t)
         if e % 250 == 0:
             print(f"Episode {e}: Total reward = {total_reward}")
-            save_model(agent, e, re/(250*(e+1)), loss/(250*(e+1)))
+            save_model(agent, e, re / 250, loss / 250)
+            re = 0
+            loss = 0  # Reset após salvar para que o monitoramento seja por blocos de 250 episódios
