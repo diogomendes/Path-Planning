@@ -47,10 +47,9 @@ python PPO.py
 
 To test the algorithms, use:
 
-python test_DQN.py
-python test_PPO.py
-python test_qlearning.py
-python test_sarsa.py
+python test_final_PPOeDQN.py
+python test_final_qlearning.py
+python test__final_sarsa.py
 
 Additional Information:
 
@@ -59,3 +58,7 @@ When training with the DQN and PPO algorithms, the scripts will automatically cr
 qlearning_discreto.py and sarsa_discreto.py will automatically create files in the directory where the script is executed, containing the trained model data.
 
 If we have a trained model, we just need to alter the paths of the files for testing the model or for the training models to train from a pre-trained one.
+
+In order to test PPO or DQN, the respective part of the code should be uncommented
+
+The environment.py file is used to train the model, and environment_test.py is used for testing because of the printed metrics.
