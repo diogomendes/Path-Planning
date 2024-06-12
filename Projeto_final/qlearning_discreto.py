@@ -3,7 +3,7 @@ import random
 import pickle
 import os
 import pandas as pd
-from env_final import Environment
+from environment import Environment
 
 class QLearningAgent:
     def __init__(self, num_actions, alpha=0.1, gamma=0.99, epsilon=0.1):
@@ -67,8 +67,8 @@ def process_lidar_points(lidar_data):
 
 
 def save_model(agent, episodes, reward, loss):
-    name_model = 'Sarsa' + str(episodes) + '.pkl'
-    name_lr = os.path.join('Sarsa_lr.csv')
+    name_model = 'Qlearning' + str(episodes) + '.pkl'
+    name_lr = os.path.join('Qlearning_lr.csv')
     if not os.path.isfile(name_lr):
         df = pd.DataFrame(columns=['Episodes', 'Loss', 'Reward'])
         df.to_csv(name_lr, index=False)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     re = 0  # total reward para gráficos/análise
     loss = 0  # total loss para gráficos/análise
 
-    num_episodes = 10000
+    num_episodes = 40000
     for e in range(num_episodes):
         raw_state, info = env.reset()
         state = process_lidar_points(raw_state)
@@ -106,8 +106,8 @@ if __name__ == "__main__":
             total_reward += reward
 
         re += total_reward
-        if e % 250 == 0:
+        if e % 5000 == 0:
             print(f"Episode {e}: Total reward = {total_reward}")
-            save_model(agent, e, re / 250, loss / 250)
+            save_model(agent, e, re / 5000, loss / 5000)
             re = 0
             loss = 0  # Reset após salvar para que o monitoramento seja por blocos de 250 episódios
