@@ -17,7 +17,7 @@ iters = 0
 while iters<250:
 
     iters += 1
-    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False,progress_bar=True, tb_log_name='DQN_')
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False,progress_bar=True, tb_log_name='DQN')
 
     model.save(f"{'Training/DQN'}/{TIMESTEPS*iters}") #Colocar + numero de timesteps anteriores para não gravar no sitio errado
 
