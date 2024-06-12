@@ -5,7 +5,7 @@ from environment import Environment
 env = Environment()
 
 model = DQN("MlpPolicy", env, verbose=1, tensorboard_log='logdir')
-#model = DQN.load('Training\\DQN2\\4000000', env) #load model ja treinado
+#model = DQN.load('Training\\DQN\\5000000', env) #load model ja treinado
 
 model.save("dqn_robot_navigation")
 
