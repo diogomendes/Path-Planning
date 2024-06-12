@@ -1,0 +1,61 @@
+Project Compatibility and Requirements
+
+Operating Systems:
+
+Compatible with Windows and Linux
+
+Dependencies:
+
+Python 3.11.9
+gymnasium
+numpy
+stable_baselines3
+pandas
+pickle
+os
+random
+math
+
+
+Instructions to Run the Code:
+
+Installation of Dependencies:
+
+Ensure Python 3.11.9 is installed on your system. Install the required Python modules using the following command:
+
+pip install gymnasium numpy stable_baselines3 pandas
+
+Running the Scripts:
+
+Before running any of the scripts, you must open one of the simulation worlds provided in the worlds directory using Webots. This setup is crucial as the scripts interact with the simulation environment:
+
+-Open Webots.
+-Navigate to File > Open World.
+-Select the desired world file from the worlds directory.
+
+Navigate to the project's root directory in your terminal or command prompt.
+
+To train the Q-learning and SARSA algorithms, use:
+
+python qlearning_discreto.py
+python sarsa_discreto.py
+
+To train the DQN and PPO algorithms, use:
+
+python DQN.py
+python PPO.py
+
+To test the algorithms, use:
+
+python test_DQN.py
+python test_PPO.py
+python test_qlearning.py
+python test_sarsa.py
+
+Additional Information:
+
+When training with the DQN and PPO algorithms, the scripts will automatically create a directory named 'training' within the project's root directory. Inside this directory, two subdirectories, 'dqn' and 'ppo', will be created to store the trained models.
+
+qlearning_discreto.py and sarsa_discreto.py will automatically create files in the directory where the script is executed, containing the trained model data.
+
+If we have a trained model, we just need to alter the paths of the files for testing the model or for the training models to train from a pre-trained one.
