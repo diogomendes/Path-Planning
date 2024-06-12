@@ -3,7 +3,7 @@ import random
 import pickle
 import os
 import pandas as pd
-from gym_environment import Environment
+from env_final import Environment
 
 class SARSAAgent:
     def __init__(self, num_actions, alpha=0.1, gamma=0.99, epsilon=0.1):
@@ -44,15 +44,35 @@ class SARSAAgent:
         self.q_table[current_state_idx + (action,)] += self.alpha * td_error
         return td_error
 
+
 def process_lidar_points(lidar_data):
-    # Supondo que lidar_data inclui todos os dados do LIDAR e a distância até o objetivo no final
-    # Removendo a distância do objetivo para simplificar o exemplo
-    lidar_points = lidar_data[:-1]  # Remove a última entrada (distância ao objetivo)
-    num_groups = 7  # Número de dimensões desejadas
-    points_per_group = len(lidar_points) // num_groups
-    # Calcula a média de cada grupo para reduzir dimensões
-    reduced_lidar_points = [np.mean(lidar_points[i:i + points_per_group]) for i in range(0, len(lidar_points), points_per_group)]
+    # Verifica se lidar_data tem 43 elementos (21 pontos com x e y mais a distância ao obstáculo)
+    if len(lidar_data) != 43:
+        raise ValueError(
+            "Expected 43 elements in lidar_data: 42 for points (x and y for each) plus one for the distance to the obstacle.")
+
+    num_groups = 3  # Quer reduzir para 3 pontos
+    points_per_group = 14  # 7 pontos por grupo, cada ponto com x e y (7 * 2 = 14 elementos)
+    reduced_lidar_points = []
+
+    # Processa cada grupo para calcular a média dos componentes x e y
+    for i in range(0, 42, points_per_group):  # Usa 42 para evitar incluir a distância no processamento de pontos
+        group_x = lidar_data[i:i + points_per_group:2]  # Pega os elementos x do grupo
+        group_y = lidar_data[i + 1:i + points_per_group:2]  # Pega os elementos y do grupo
+
+        # Calcula a média de x e de y
+        avg_x = np.mean(group_x)
+        avg_y = np.mean(group_y)
+
+        # Adiciona as médias à lista reduzida
+        reduced_lidar_points.extend([avg_x, avg_y])
+
+    # Adiciona a distância ao obstáculo ao final da lista reduzida
+    distance_to_obstacle = lidar_data[-1]
+    reduced_lidar_points.append(distance_to_obstacle)
+
     return reduced_lidar_points
+
 
 def save_model(agent, episodes, reward, loss):
     name_model = 'Sarsa' + str(episodes) + '.pkl'
@@ -104,6 +124,8 @@ if __name__ == "__main__":
         if e % 250 == 0:
             print(f"Episode {e}: Total reward = {total_reward}")
             save_model(agent, e, re/(250*(e+1)), loss/(250*(e+1)))
+
+
 
 
 
