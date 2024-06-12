@@ -3,7 +3,7 @@ import random
 import pickle
 import os
 import pandas as pd
-from env_final import Environment
+from environment import Environment
 
 class SARSAAgent:
     def __init__(self, num_actions, alpha=0.1, gamma=0.99, epsilon=0.1):
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     i = 0  # iteraçoes para calculo de media
     loss = 0  # total loss para graficos/analise
 
-    num_episodes = 10000  # Total de episódios
+    num_episodes = 40000  # Total de episódios
     for e in range(num_episodes):
         raw_state, info = env.reset()
         state = process_lidar_points(raw_state)  # Reduz as dimensões dos dados do LIDAR
@@ -121,9 +121,9 @@ if __name__ == "__main__":
             total_reward += reward
         re += total_reward
         loss += (error_t / t)
-        if e % 250 == 0:
+        if e % 5000 == 0:
             print(f"Episode {e}: Total reward = {total_reward}")
-            save_model(agent, e, re/(250*(e+1)), loss/(250*(e+1)))
+            save_model(agent, e, re/(5000*(e+1)), loss/(5000*(e+1)))
 
 
 
