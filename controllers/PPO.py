@@ -6,7 +6,7 @@ env = Environment()
 
 model = PPO("MlpPolicy", env, verbose=1,tensorboard_log='logdir')
 
-#model = PPO.load('Training\\PPO\\2500000', env) #load model ja treinado
+#model = PPO.load('Training\\PPO\\5000000', env) #load model ja treinado
 
 
 model.save("ppo_robot_navigation")
